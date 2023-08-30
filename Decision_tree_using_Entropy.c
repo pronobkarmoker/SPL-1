@@ -221,7 +221,7 @@ int main()
         for (int j = 0; j < num_samples; j++)
         {
             int threshold = data[j][i]; // Calculate information gain for each value
-            double information_gain = calculate_information_gain(class_labels, data[i], num_samples, threshold, num_classes);
+            double information_gain = calculate_information_gain(class_labels, data[j], num_samples, threshold, num_classes);
 
             if (information_gain > max_information_gain)
             {
