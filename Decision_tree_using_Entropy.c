@@ -138,7 +138,7 @@ Node *build_decision_tree(int data[][3], int class_labels[], int num_samples, in
 
     for (int i = 0; i < num_features; i++)
     {
-        for (int j = 0; j < num_samples; j++)
+        for (int j = 0; j < num_samples; j++) 
         {
             int threshold = data[j][i]; // Calculate information gain for each value
             double information_gain = calculate_information_gain(class_labels, data[i], num_samples, threshold, num_classes);
