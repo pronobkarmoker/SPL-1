@@ -36,7 +36,7 @@ double calculateInformationGainForClass(double classDistr[][NUM_CLASSES], int nu
         leftClassDistr[j] = totalClassDistr[j];
     }
 
-    // Calculate Hellinger Distance for right branch (empty)
+    // Calculate Hellinger Distance for right branch
     for (int j = 0; j < numClasses; j++) {
         rightClassDistr[j] = 0;
     }
