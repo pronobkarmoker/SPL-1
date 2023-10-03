@@ -1,16 +1,20 @@
 #include <stdio.h>
-#include <math.h>
 #include <stdlib.h>
+#include <string.h>
+#include <math.h>
 
 #define MAX_SAMPLES 4
+#define NUM_FEATURES 3
+#define NUM_CLASSES 2
 
+// Define a struct for the decision tree node
 typedef struct Node
 {
-    int feature_index;
-    int threshold;
-    int class_label;
-    struct Node *left_child;
-    struct Node *right_child;
+    int feature_index;        // Index of the feature to split on (or -1 for leaf nodes)
+    int threshold;            // Threshold value for the split (or -1 for leaf nodes)
+    int class_label;          // Class label if it's a leaf node (or -1 for non-leaf nodes)
+    struct Node *left_child;  // Pointer to the left child node
+    struct Node *right_child; // Pointer to the right child node
 } Node;
 
 double log2(double x)
@@ -18,75 +22,64 @@ double log2(double x)
     return log(x) / log(2);
 }
 
+// Function to calculate the entropy of a set of class labels
 double calculate_entropy(int *class_labels, int num_samples)
 {
-    int pos_count = 0;
-    int neg_count = 0;
+    double entropy = 0.0;
 
+    // Count the number of samples in each class
+    int class_counts[NUM_CLASSES] = {0};
     for (int i = 0; i < num_samples; i++)
     {
-        if (class_labels[i] == 1)
-        {
-            pos_count++;
-        }
-        else
-        {
-            neg_count++;
-        }
+        int label = class_labels[i];
+        class_counts[label]++;
     }
 
-    double p_pos = (double)pos_count / num_samples;
-    double p_neg = (double)neg_count / num_samples;
-
-    double entropy = 0.0;
-    if (p_pos != 0)
+    // Calculate entropy using the formula: -p_i * log2(p_i)
+    for (int i = 0; i < NUM_CLASSES; i++)
     {
-        entropy -= p_pos * log2(p_pos);
-    }
-    if (p_neg != 0)
-    {
-        entropy -= p_neg * log2(p_neg);
+        if (class_counts[i] > 0)
+        {
+            double probability = (double)class_counts[i] / num_samples;
+            entropy -= probability * log2(probability);
+        }
     }
 
     return entropy;
 }
 
+// Function to calculate the information gain for a given split
 double calculate_information_gain(int *class_labels, int *feature_values, int num_samples, int threshold, int num_classes)
 {
-    int left_count = 0;
-    int right_count = 0;
-    int *left_class_counts = (int *)malloc(num_classes * sizeof(int));
-    int *right_class_counts = (int *)malloc(num_classes * sizeof(int));
+    // Calculate the total entropy before the split
+    double total_entropy = calculate_entropy(class_labels, num_samples);
 
-    // Initialize the arrays to 0
-    for (int i = 0; i < num_classes; ++i)
-    {
-        left_class_counts[i] = 0;
-        right_class_counts[i] = 0;
-    }
+    // Split the data into two subsets based on the threshold
+    int left_count = 0, right_count = 0;
+    int left_class_counts[NUM_CLASSES] = {0};
+    int right_class_counts[NUM_CLASSES] = {0};
 
     for (int i = 0; i < num_samples; i++)
     {
         if (feature_values[i] <= threshold)
         {
             left_count++;
-            left_class_counts[class_labels[i] - 1]++;
+            left_class_counts[class_labels[i]]++;
         }
         else
         {
             right_count++;
-            right_class_counts[class_labels[i] - 1]++;
+            right_class_counts[class_labels[i]]++;
         }
     }
 
-    double total_entropy = calculate_entropy(class_labels, num_samples);
+    // Calculate the weighted average of the entropies of the two subsets
     double left_entropy = calculate_entropy(left_class_counts, left_count);
     double right_entropy = calculate_entropy(right_class_counts, right_count);
+    double weighted_entropy = ((double)left_count / num_samples) * left_entropy + ((double)right_count / num_samples) * right_entropy;
 
-    double p_left = (double)left_count / num_samples;
-    double p_right = (double)right_count / num_samples;
-
-    double information_gain = total_entropy - (p_left * left_entropy + p_right * right_entropy);
+    // Calculate the information gain
+    double information_gain = total_entropy - weighted_entropy;
 
     return information_gain;
 }
@@ -122,13 +115,19 @@ Node *create_node(int feature_index, int threshold, int class_label)
     return new_node;
 }
 
-Node *build_decision_tree(int data[][3], int class_labels[], int num_samples, int num_features, int num_classes)
+// Define a function to build the decision tree
+void func(Node *root, int data[][NUM_FEATURES], int class_labels[], int num_samples, int num_features, int num_classes)
 {
     // Base case: If all samples belong to the same class, create a leaf node
     int unique_class = get_unique_class(class_labels, num_samples);
     if (unique_class != -1)
     {
-        return create_node(-1, -1, unique_class);
+        root->feature_index = -1;
+        root->threshold = -1;
+        root->class_label = unique_class;
+        root->left_child = NULL;
+        root->right_child = NULL;
+        return;
     }
 
     // Calculate the best split
@@ -138,10 +137,10 @@ Node *build_decision_tree(int data[][3], int class_labels[], int num_samples, in
 
     for (int i = 0; i < num_features; i++)
     {
-        for (int j = 0; j < num_samples; j++) 
+        for (int j = 0; j < num_samples; j++)
         {
-            int threshold = data[j][i]; // Calculate information gain for each value
-            double information_gain = calculate_information_gain(class_labels, data[i], num_samples, threshold, num_classes);
+            int threshold = data[j][i];
+            double information_gain = calculate_information_gain(class_labels, data[j], num_samples, threshold, num_classes);
 
             if (information_gain > max_information_gain)
             {
@@ -152,8 +151,10 @@ Node *build_decision_tree(int data[][3], int class_labels[], int num_samples, in
         }
     }
 
-    // Create the current node
-    Node *current_node = create_node(best_feature_index, best_threshold, -1);
+    // Set the current node's attributes
+    root->feature_index = best_feature_index;
+    root->threshold = best_threshold;
+    root->class_label = -1; // This is an intermediate node, not a leaf
 
     // Split the data based on the best split
     int left_indices[MAX_SAMPLES];
@@ -173,83 +174,101 @@ Node *build_decision_tree(int data[][3], int class_labels[], int num_samples, in
         }
     }
 
-    // Recursively build left and right subtrees
-    current_node->left_child = build_decision_tree(data, class_labels, left_count, num_features, num_classes);
-    current_node->right_child = build_decision_tree(data, class_labels, right_count, num_features, num_classes);
+    // Create left and right child nodes
+    root->left_child = create_node(-1, -1, -1);
+    root->right_child = create_node(-1, -1, -1);
 
-    return current_node;
+    // Recursively build left and right subtrees
+    func(root->left_child, data, class_labels, left_count, num_features, num_classes);
+    func(root->right_child, data, class_labels, right_count, num_features, num_classes);
 }
 
-void free_decision_tree(Node *node)
+// Define a function to make predictions using the decision tree
+int decision_function(Node *root, int data[NUM_FEATURES])
 {
-    if (node == NULL)
+    // Traverse the decision tree to make a prediction
+
+    while (root != NULL)
     {
-        return;
+        // Check if this node is a leaf node
+        if (root->left_child == NULL && root->right_child == NULL)
+        {
+            return root->class_label; // This is a leaf node, return the class label
+        }
+
+        // Decide which child to follow based on the feature value
+        if (data[root->feature_index] <= root->threshold)
+        {
+            root = root->left_child; // Follow the left child
+        }
+        else
+        {
+            root = root->right_child; // Follow the right child
+        }
     }
 
-    // Recursively free left and right subtrees
-    free_decision_tree(node->left_child);
-    free_decision_tree(node->right_child);
-
-    // Free the current node
-    free(node);
+    // In case the tree traversal somehow reaches a NULL node, return a default value
+    return -1; // You can choose an appropriate default value for unclassified cases
 }
 
+// Define the k-fold cross-validation function
+void k_folds_cross_validation(int data[][NUM_FEATURES], int class_labels[], int num_samples, int num_features, int num_classes, int k)
+{
+    int folds = k;
+    int accuracy = 0;
 
+    int fold_size = num_samples / k;
 
+    for (int i = 0; i < k; i++)
+    {
+        Node *root = (Node *)malloc(sizeof(Node)); // Allocate memory for the decision tree
+        // Initialize your decision tree root here
 
+        int data2[MAX_SAMPLES][NUM_FEATURES]; // Create a copy of the data
+
+        // Call your function to build the decision tree
+        func(root, data, class_labels, num_samples, num_features, num_classes);
+
+        int expected = class_labels[i];
+        printf("Expected Class: %d\n", expected);
+
+        // Get the attributes for the current sample
+        int attributes[NUM_FEATURES];
+        for (int j = 0; j < NUM_FEATURES; j++)
+        {
+            attributes[j] = data[i][j];
+        }
+
+        // Implement your decision function and get the actual result
+        int actual = decision_function(root, attributes);
+
+        if (actual == expected)
+        {
+            accuracy++;
+        }
+
+        printf("Actual Class: %d\n", actual);
+        printf("Accuracy: %d\n", accuracy);
+
+        // Free memory allocated for the decision tree
+        free(root);
+    }
+
+    printf("Average Accuracy is: %.2lf%%\n", ((double)accuracy / folds) * 100);
+}
 
 int main()
 {
-    // Input data
-    int data[4][3] = {
+    // Sample data, replace with your dataset
+    int data[MAX_SAMPLES][NUM_FEATURES] = {
         {5, 10, 15},
         {50, 55, 60},
         {100, 150, 200},
         {250, 300, 350}};
 
-    int class_labels[4] = {1, 1, 2, 2};
-    int num_samples = 4;
-    int num_classes = 2;
-    int num_features = 3;
-
-    // Calculate the information gain for each attribute value
-    double max_information_gain = -1.0;
-    int best_feature_index = -1;
-    int best_threshold = -1;
-
-    for (int i = 0; i < num_features; i++)
-    {
-        for (int j = 0; j < num_samples; j++)
-        {
-            int threshold = data[j][i]; // Calculate information gain for each value
-            double information_gain = calculate_information_gain(class_labels, data[j], num_samples, threshold, num_classes);
-
-            if (information_gain > max_information_gain)
-            {
-                max_information_gain = information_gain;
-                best_feature_index = i;
-                best_threshold = threshold;
-            }
-        }
-    }
-
-    // Build the decision tree
-    Node *root = create_node(best_feature_index, best_threshold, -1); // Create root node
-    root->left_child = create_node(-1, -1, 1);                        // Create left child node with class 1
-    root->right_child = create_node(-1, -1, 2);                       // Create right child node with class 2
-
-    // Print the selected root and its max information gain
-    printf("Selected Root Feature: %d\n", best_feature_index);
-    printf("Selected Threshold: %d\n", best_threshold);
-    printf("Max Information Gain: %lf\n", max_information_gain);
-
-    // Print the decision tree
-    printf("Decision Tree:\n");
-    //print_decision_tree_info(root, data, num_samples, num_features, num_classes);
-
-    // Clean up: Free memory used by the decision tree
-    free_decision_tree(root);
+    int class_labels[MAX_SAMPLES] = {1, 1, 2, 2};
+    int k = 4; // Number of folds
+    k_folds_cross_validation(data, class_labels, MAX_SAMPLES, NUM_FEATURES, NUM_CLASSES, k);
 
     return 0;
 }
