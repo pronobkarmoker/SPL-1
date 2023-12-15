@@ -126,11 +126,10 @@ void test_random()
     RandomGenerator(n);
     RandomGenerator2(n / 2);
 
-    ifstream file("decision_random.csv");
+    ifstream file("IrisFlower.csv");
     string line;
     int i = 0;
-    while (getline(file, line))
-    {
+    while (getline(file, line)) {
         stringstream ss(line);
         string token;
 
@@ -152,12 +151,12 @@ void test_random()
         i++;
     }
     setcolor1(6);
-    printf("\nEnter the values of [Outlook,Temperature,Humidity,Wind] for predicting.\n\nwhere :\n");
-    setcolor1(11);
-    printf("\t Outlook = {Sunny, Overcast, Rain}\n");
-    printf("\t Temparature = {Hot, Mild, Cool}\n");
-    printf("\t Humidity = {High, Normal}\n");
-    printf("\t Wind = {Strong, Weak}\n");
+    // printf("\nEnter the values of [Outlook,Temperature,Humidity,Wind] for predicting.\n\nwhere :\n");
+    // setcolor1(11);
+    // printf("\t Outlook = {Sunny, Overcast, Rain}\n");
+    // printf("\t Temparature = {Hot, Mild, Cool}\n");
+    // printf("\t Humidity = {High, Normal}\n");
+    // printf("\t Wind = {Strong, Weak}\n");
     for (int j = 0; j < m - 1; j++)
     {
         string s;
@@ -212,11 +211,11 @@ void test_random()
     }
     if (yes >= no)
     {
-        cout << "Yes, I will play tennis\n";
+        cout << "Yes\n";
     }
     else
     {
-        cout << "No, I won't play tennis\n";
+        cout << "No\n";
     }
 }
 
@@ -225,18 +224,17 @@ void random_forest()
     // cout << "Number of files: ";
     // int k, i, index = 0;
     // cin >> k;
-    // freopen("decision_random.txt", "r", stdin);
+    //freopen("decision_random.txt", "r", stdin);
     ll n = 15, m = 5;
     vvs DATA(n);
 
     RandomGenerator(n);
     RandomGenerator2(n / 2);
 
-    ifstream file("decision_random.csv");
+    ifstream file("IrisFlower.csv");
     string line;
     int i = 0;
-    while (getline(file, line))
-    {
+    while (getline(file, line)) {
         stringstream ss(line);
         string token;
 
@@ -339,5 +337,5 @@ void random_forest()
             accuracy++;
     }
     setcolor1(10);
-    printf("Accuracy is : %f percant \n", (1.0 * accuracy / (folds * 1.0)) * 100);
+    printf("Accuracy is : %f percant \n",(1.0 * accuracy / (folds * 1.0)) * 100) ;
 }

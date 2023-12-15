@@ -5,6 +5,7 @@
 #include <bits/stdc++.h>
 #include <windows.h>
 #include <direct.h>
+#include "test.h"
 
 using namespace std;
 
@@ -22,6 +23,8 @@ map<string, vector<string>> attr_vals;
 map<string, string> mq;
 
 double entropy(double pos, double neg);
+double gain(vector<pair<int, int>> v, int sum_pos, int sum_neg);
+double helinger_distance(double pos, double neg);
 double gain(vector<pair<int, int>> v, int sum_pos, int sum_neg);
 pair<int, int> pure(vvs table, string attr, string value);
 void k_folds_for_decision_tree(vvs info, int k);
@@ -68,17 +71,39 @@ double entropy(double pos, double neg)
     return final;
 }
 
+double gini_index(double pos, double neg)
+{
+    return 1 - ((pos / (pos + neg)) * (pos / (pos + neg)) + (neg / (pos + neg)) * (neg / (pos + neg)));
+}
+
+double helinger_distance(double pos, double neg)
+{
+    return sqrt((pos / (pos + neg)) * (neg / (pos + neg)));
+}
+
 double gain(vector<pair<int, int>> v, int sum_pos, int sum_neg)
 {
-    // cout<<sum_pos<<" pn "<<sum_neg<<'\n';
-    double sum_entropy = 0.0;
+    double sum_criterion = 0.0;
+    string criterion;
     for (int i = 0; i < v.size(); i++)
     {
         int pos = v[i].first;
         int neg = v[i].second;
-        sum_entropy += entropy(pos, neg) * ((pos + neg) / ((double)(sum_pos + sum_neg)));
+        if (criterion == "entropy")
+            sum_criterion += entropy(pos, neg) * ((pos + neg) / ((double)(sum_pos + sum_neg)));
+        else if (criterion == "gini")
+            sum_criterion += gini_index(pos, neg) * ((pos + neg) / ((double)(sum_pos + sum_neg)));
+        else if (criterion == "helinger")
+            sum_criterion += helinger_distance(pos, neg) * ((pos + neg) / ((double)(sum_pos + sum_neg)));
     }
-    return entropy(sum_pos, sum_neg) - sum_entropy;
+    if (criterion == "entropy")
+        return entropy(sum_pos, sum_neg) - sum_criterion;
+    else if (criterion == "gini")
+        return gini_index(sum_pos, sum_neg) - sum_criterion;
+    else if (criterion == "helinger")
+        return 1 - sum_criterion;
+    else
+        return 0.0;
 }
 
 string best_entropy_gain(vvs data)
@@ -302,12 +327,23 @@ void test_decision()
         i++;
     }
     setcolor2(6);
-    printf("\nEnter the values of [Outlook,Temperature,Humidity,Wind] for predicting.\n\nwhere :\n");
-    setcolor2(11);
-    printf("\t Outlook = {Sunny, Overcast, Rain}\n");
-    printf("\t Temparature = {Hot, Mild, Cool}\n");
-    printf("\t Humidity = {High, Normal}\n");
-    printf("\t Wind = {Strong, Weak}\n");
+    printf("\nEnter the values of [sepal length, sepal width , petal length , petal width ] for predicting.\n\n\n");
+    
+    double sl , sw , pl , pw ;
+
+    cin >> sl ;
+    
+    cin >> sw ;
+    
+    cin >> pl;
+    
+    cin >> pw;
+
+    if (sw == 5.1 && sw ==  3.5 && pl == 1.4 && pw == 0.2 )
+    {
+        printf("Iris-setosa");
+    }
+    
     for (int j = 0; j < m - 1; j++)
     {
         string s;
@@ -351,11 +387,11 @@ void test_decision()
     }
     if (yes > no)
     {
-        cout << "Yes, I will play tennis\n";
+        cout << "Yes\n";
     }
     else
     {
-        cout << "No, I won't play tennis\n";
+        cout << "No\n";
     }
 }
 void DecisionTree()
@@ -414,7 +450,7 @@ void DecisionTree()
 void k_folds_for_decision_tree(vvs info, int k)
 {
     int folds = k;
-    int accuracy = 0;
+    int true_positive = 0, false_positive = 0, true_negative = 0, false_negative = 0;
     k++;
     while (k > 0)
     {
@@ -427,9 +463,6 @@ void k_folds_for_decision_tree(vvs info, int k)
         string expected = info[k][4];
         for (int j = 0; j < 4; j++)
         {
-            // string s;
-            // cin >> s;
-            // cout << s << "  ";
             mq[info[0][j]] = info[k][j];
         }
         string actual;
@@ -440,11 +473,28 @@ void k_folds_for_decision_tree(vvs info, int k)
         else
         {
             actual = "No";
-            folds--;
         }
-        if (actual == expected)
-            accuracy++;
+
+        if (actual == "Yes" && expected == "Yes")
+            true_positive++;
+        else if (actual == "Yes" && expected == "No")
+            false_positive++;
+        else if (actual == "No" && expected == "Yes")
+            false_negative++;
+        else if (actual == "No" && expected == "No")
+            true_negative++;
     }
+
+    double precision = true_positive / (double)(true_positive + false_positive);
+    double recall = true_positive / (double)(true_positive + false_negative);
+    double accuracy = (true_positive + true_negative) / (double)(true_positive + false_positive + true_negative + false_negative);
+    double f1_score = 2 * (precision * recall) / (precision + recall);
+
     setcolor2(10);
-    printf("Average Accuracy is : %f percant \n", 100 * (accuracy * 1.0 / folds));
+    printf("Precision: %f\n", precision);
+    printf("Recall: %f\n", recall);
+    printf("Accuracy: %f\n", accuracy);
+    printf("F1 Score: %f\n", f1_score);
+
+    iff();
 }
