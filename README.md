@@ -9,21 +9,26 @@ Dataset taken from : https://archive.ics.uci.edu/ml/datasets/Insurance+Company+B
 
 ### HOW TO RUN : 
 
-1) Compile the program by entering the following command :
+1) Go to the folder :
+```sh
+   cd Final
+ ```
+
+2) Compile the program by entering the following command :
 ```sh
    g++  -o ID3 ID3.cpp
  ```
 
   
-2) Run the executable by entering the following command : 
+3) Run the executable by entering the following command : 
 ```sh
    ./ID3  ticdata2000.txt  experiment_no
    ```
    ticdata2000.txt contains the dataset for creating the tree.
    
-3) Press enter to print the output.
+4) Press enter to print the output.
    
-4) Please refer to the Results and Conclusion file to see the final results of all the experiments.  
+5) Please refer to the Results and Conclusion file to see the final results of all the experiments.  
 
 
 
