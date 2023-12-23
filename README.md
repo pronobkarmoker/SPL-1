@@ -3,7 +3,7 @@
 C++ implementation of Decision Trees and Random Forests for classification of Insurance Dataset
 
 
-We build decision trees and random forests for a insurance dataset, evaluating it for various experiments such as adding noise and tree pruning.
+We build decision trees and random forests for a insurance dataset, evaluating it for various experiments .
 Dataset taken from : https://archive.ics.uci.edu/ml/datasets/Insurance+Company+Benchmark+%28COIL+2000%29 
 
 
